@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# @201812
 
 import time
 import os
@@ -51,10 +52,6 @@ class optimizer(object):
             # take all timeStamp
             all_timestamp_list = sorted(set(self.DataBase.timeStamp))
             self.timeStampList = all_timestamp_list[self.offset::self.holdbar]
-        # if self.tradeDate is None:
-        #     all_tradedate_list = sorted(set(self.DataBase.allTradeDate))
-        #     # note not taking this from timeStamp column, tradeDate is not natural date.
-        #     self.tradeDate = all_tradedate_list
 
         print(self.timeStampList)
         print(self.DataBase.head())
@@ -101,8 +98,6 @@ class optimizer(object):
         hsbar = int(1000*np.abs(x)/np.ceil(np.abs(x))) if np.abs(x)>0.001 else 100
 
         slice_df = self.select_slice(timestamp, wkbar=wkbar, hsbar=hsbar)
-
-        # print(slice_df.timeStamp.unique())
 
         if len(slice_df)>1 and len(slice_df.symbol.unique())>4:
             # add signals for the dataframe slice.
@@ -259,13 +254,8 @@ class RandomDisplacementBounds(object):
                 break
         return xnew
 
-
 # 计算指标分数
 def add_pos_cal_pnl(df):
-    '''
-    计算pnl对所有symbol单独每个symbol计算
-    输入df，包含信号列'Indicator_open', 'Indicator_cutlong', 'Indicator_cutshort'
-    '''
     # 0. get positions for every symbol
     position_all_symbol = df.groupby('symbol', as_index=False).apply(signal2Position)
     # reset the index
@@ -351,115 +341,6 @@ def vote(df):
 
     ret = np.array([i for (i,j) in L])[0:2]
     return int(ret.mean())
-
-# unfinished...
-# # select bars by trading days rather than naive fixed bar number.
-# def select_slice_by_trade_day(self, timestamp, **kwargs):
-#     '''
-#     timestamp: current-bar
-#     wk
-#     '''
-#     # input working-time unit and period
-#     wkunit = kwargs.get('wkunit','d')
-#     hsunit = kwargs.get('hsunit','d')
-#     wktime = kwargs.get('wktime', 1)
-#     hstime = kwargs.get('hstime', 2)
-#     # 确定wkbar和hsbar
-
-#     # using  self.tradeDate
-#     denominator = {'d':1, 'm':100, 'y':10000,'day':1, 'month':100, 'year':10000}
-#     # wk
-#     if wkunit in denominator.keys():
-#     	wk_tradeDate = self.tradeDate//denominator[wkunit]
-#     else:
-#         print('Time unit Error!')
-#         print('Fail in select_slice_by_trade_day !')
-#         return
-#     wkbar =
-
-#     # hs
-#     if hsunit in denominator.keys():
-#     	hs_tradeDate = self.tradeDate//denominator[hsunit]
-#     else:
-#         print('Time unit Error !')
-#         print('Fail in select_slice_by_trade_day !')
-#         return
-
-#     hsbar =0
-#     # extract corresponding bars
-#     slice_df = self.DataBase.groupby('symbol').apply(self.extract_bars_by_timestamp, timestamp, wkbar=wkbar, hsbar=hsbar)
-#     slice_df = slice_df.reset_index(drop=True)
-#     return slice_df
-    
-# # reference, delete after finishing above.
-# def tsCoarsen(A, allTradeDate, **kwargs):
-#     # default settings
-# 	unit = kwargs.get('unit', 'd')
-# 	window = kwargs.get('window', 1) # real_window = window with 'unit'.
-# 	needDate = kwargs.get('needDate', False) #
-# 	method=kwargs.get('method', 'mean') # mean value
-
-# 	# add additional parameters for some method
-# 	if (method=='percentile'):
-# 		percentile = kwargs.get('percentile', 50)
-# 	if method == 'loc':
-# 		# take the row at specific loc_id.
-# 		# default: take the 1st-row elements.
-# 		loc_id = kwargs.get('loc_id', 0)
-#     # -------------------------------------------------------------
-#     allTradeDate = allTradeDate.reshape(-1)
-#     denominator = {'d':1, 'm':100, 'y':10000,'day':1, 'month':100, 'year':10000}
-
-#     if unit in denominator.keys():
-#     	tradeDate = np.array([ (item//denominator[unit]) for item in allTradeDate])
-#     else:
-#         print('Time unit Error in tsCoarsen !')
-#         print('Fail in tsCoarsen !')
-#         return
-#   	# -----------------------------------------------------------------
-#     uniqVal, uniqId = np.unique(tradeDate, return_index=True)
-#     retShape = (len(uniqVal), A.shape[1])
-#     ret = np.full(retShape, np.nan)
-#     # -----------------------------------------------------------------
-#     # basic operations: NEGELECT np.nan
-#     # https://docs.scipy.org/doc/numpy/search.html?q=numpy.nan&check_keywords=yes&area=default
-#     funcMapDict0 = {'mean':np.nanmean, 'std':np.nanstd, 'var':np.nanvar,   \
-#     				'median':np.nanmedian, 'percentile':np.nanpercentile,  \
-#     				'sum':np.nansum, 'prod': np.nanprod,                \
-#     				'max':np.nanmax, 'argmax':np.nanargmax,      \
-#     				'min':np.nanmin, 'argmin':np.nanargmin,
-#     				 }
-#     # ... ADD MORE COARSE-GRAINING OPERATIONS HERE ...
-#     funcMapDict1 = {}
-#     funcMapDict = funcMapDict0.copy()
-#     funcMapDict.update(funcMapDict1)
-#     # ------------------------------------------------
-#     if method in funcMapDict.keys():
-# 	    func = funcMapDict[method]
-# 	    for i_ in range(len(uniqVal))[window-1:]:
-# 	        if i_==window-1:
-# 	            loc = np.where(tradeDate <= uniqVal[i_])[0]
-# 	        else:
-# 	            loc = np.where((tradeDate <= uniqVal[i_]) & (tradeDate > uniqVal[i_-(window)]))[0]
-# 	        ret[i_, :] = func(A[loc, :], axis=0)
-# 	# 'method' not in MapDict.keys()
-# 	else:
-#         for i_ in range(len(uniqVal))[window-1:]:
-#             if i_==window-1:
-#                 loc = np.where(tradeDate <= uniqVal[i_])[0]
-#             else:
-#                 loc = np.where((tradeDate <= uniqVal[i_]) & (tradeDate > uniqVal[i_-(window)]))[0]
-
-#             # add your operations here if not in funMapDict...
-#             if (method =='loc'):
-# 	            ret[i_, :] = A[loc[loc_id], :]
-# 	# ----------------------------------------------------------------
-# 	# need tradeDate array?
-#     if needDate:
-#         ret = (uniqVal, ret)
-
-#     return ret
-
 
 
 
