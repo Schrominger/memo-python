@@ -5,3 +5,5 @@
 
 
 
+- rolling apply
+see my CSDN blog.
